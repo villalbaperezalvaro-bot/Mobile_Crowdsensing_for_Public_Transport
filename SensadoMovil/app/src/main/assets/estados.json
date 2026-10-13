@@ -1,0 +1,83 @@
+{
+  "status": true,
+  "data": {
+    "uuid": "8fd1ab23",
+    "name": "Campaña Puebla",
+
+    "vehicle_types": [
+      {
+        "id": 1,
+        "name": "Combi 🚐"
+      },
+      {
+        "id": 2,
+        "name": "Microbús 🚎"
+      },
+      {
+        "id": 3,
+        "name": "Autobús 🚌"
+      },
+      {
+        "id": 5,
+        "name": "Articulada 🚌🚌"
+      }
+    ],
+
+    "routes": [
+      {
+        "id": 1,
+        "name": "Ruta Chipilo"
+      },
+      {
+        "id": 2,
+        "name": "Ruta Acuayuca"
+      },
+      {
+        "id": 3,
+        "name": "Alimentadora 3"
+      },
+      {
+        "id": 4,
+        "name": "Otra"
+      }
+    ],
+
+    "sensors": ["gps", "accelerometer", "gyroscope"],
+
+    "estados": [
+      {
+        "id": 0,
+        "name": "En Origen"
+      },
+      {
+        "id": 1,
+        "name": "Caminando a la parada / Destino"
+      },
+      {
+        "id": 2,
+        "name": "Esperando"
+      },
+      {
+        "id": 3,
+        "name": "Ascendiendo"
+      },
+      {
+        "id": 4,
+        "name": "Viajando de pie"
+      },
+      {
+        "id": 5,
+        "name": "Viajando Sentado"
+      },
+      {
+        "id": 6,
+        "name": "Descendiendo"
+      },
+
+      {
+        "id": 7,
+        "name": "Destino"
+      }
+    ]
+  }
+}

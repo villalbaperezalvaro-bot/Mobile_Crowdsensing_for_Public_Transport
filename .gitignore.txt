@@ -1,0 +1,25 @@
+# Android / Gradle
+**/build/
+.gradle/
+.idea/
+*.iml
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# APK y archivos de compilación
+*.apk
+*.aab
+output-metadata.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# Archivos temporales
+.DS_Store
+Thumbs.db

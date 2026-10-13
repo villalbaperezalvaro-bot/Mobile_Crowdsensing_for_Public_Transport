@@ -1,0 +1,24 @@
+<resources>
+    <string-array name="rutas_array">
+        <item>Seleccione una ruta</item>
+        <item>1 - Ruta Chipilo</item>
+        <item>2 - Ruta Acuayuca</item>
+        <item>3 - Alimentadora 3 </item>
+        <item>4 - Otra</item>
+    </string-array>
+
+    <string-array name="unidades_array">
+        <item>Seleccione unidad</item>
+        <item>1 - Unidad U71</item>
+        <item>2 - Unidad A94</item>
+        <item>3 - Otra Unidad</item>
+    </string-array>
+
+    <string-array name="tipos_transporte_array">
+        <item>Seleccione tipo de transporte</item>
+        <item>1 - Combi      🚐</item>
+        <item>2 - Microbús   🚎</item>
+        <item>3 - Autobús    🚌</item>
+        <item>5 - Articulada 🚌🚌</item>
+    </string-array>
+</resources>

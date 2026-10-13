@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">Sensado Movil</string>
+    <string name="logo_description">Logo del INAOE</string>
+    <string name="system_title">UN PROYECTO EN CONJUNTO CON EL INSTITUTO NACIONAL DE ASTROFÍSICA, OPTICA Y ELECTRÓNICA</string>
+    <string name="id_hint">ID</string>
+    <string name="enter_button_text">ENTRAR</string>
+
+    <string name="id_empty_error">El ID no puede estar vacío</string>
+    <string name="please_enter_id">Por favor, ingresa tu ID</string>
+    <string name="id_entered_message">ID ingresado: %1$s</string>
+
+    <string name="form_title">Rellena los siguientes campos</string>
+    <string name="status_waiting">En espera del Transp.</string>
+    <string name="status_ascending">Ascendiendo el Transp.</string>
+    <string name="status_descending">Descendiendo del Transp.</string>
+    <string name="status_standing">Viajando de pie</string>
+    <string name="status_sitting">Viajando sentado</string>
+    <string name="label_ruta">Ruta</string>
+    <string name="hint_ruta">Ingrese la ruta</string>
+    <string name="label_num">Num.</string>
+    <string name="hint_num">Ingrese el número</string>
+    <string name="label_tipo_transp">Tipo Transp.</string>
+    <string name="hint_tipo_transp">Ingrese el tipo de transporte</string>
+    <string name="btn_iniciar_sensado">Iniciar Sensado</string>
+    <string name="btn_detener_sensado">Detener Sensado</string>
+    <string name="btn_ver_lista">Ver Lista</string>
+
+    <string name="permission_denied_message">Permiso de almacenamiento denegado. No se puede guardar el archivo CSV.</string>
+    <string name="fill_all_fields_message">Por favor, rellena todos los campos y selecciona un estado de viaje.</string>
+
+    <string name="invalid_id_error">ID inválido. Por favor, intenta de nuevo.</string>
+    <string name="icono_archivo">Icono archivo CSV</string>
+
+
+</resources>

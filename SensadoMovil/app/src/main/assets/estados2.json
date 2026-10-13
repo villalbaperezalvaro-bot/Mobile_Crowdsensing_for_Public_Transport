@@ -1,0 +1,59 @@
+{
+  "status": true,
+  "data": {
+    "uuid": "8fd1ab23",
+    "name": "Campaña Puebla",
+
+    "vehicle_types": [
+      {
+        "id": 1,
+        "name": "Combi 🚐"
+      },
+      {
+        "id": 2,
+        "name": "Microbús 🚎"
+      },
+      {
+        "id": 3,
+        "name": "Autobús 🚌"
+      },
+      {
+        "id": 5,
+        "name": "Articulada 🚌🚌"
+      }
+    ],
+
+    "routes": [
+      {
+        "id": 1,
+        "name": "Ruta Chipilo"
+      },
+      {
+        "id": 2,
+        "name": "Ruta Acuayuca"
+      },
+      {
+        "id": 3,
+        "name": "Alimentadora 3"
+      },
+      {
+        "id": 4,
+        "name": "Otra"
+      }
+    ],
+
+    "sensors": [ "gps", "accelerometer", "gyroscope"],
+
+    "estados": [
+
+      {
+        "id": 3,
+        "name": "Ascendiendo"
+      },
+      {
+        "id": 6,
+        "name": "Descendiendo"
+      }
+    ]
+  }
+}
