@@ -1,0 +1,7 @@
+numpy
+pandas
+matplotlib
+PyWavelets
+PyQt6
+PyQt6-WebEngine
+plotly

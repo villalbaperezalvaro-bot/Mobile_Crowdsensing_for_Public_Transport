@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Trayectorias GPS - Documentación HD</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PapaParse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- html2canvas para exportación de capturas HD -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-card: #ffffff;
+            --text-color: #0f172a;
+            --accent-color: #2563eb;
+            --border-color: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: #0f172a;
+            color: #ffffff;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-export {
+            background-color: #16a34a;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn-export:hover {
+            background-color: #15803d;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 60px);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 440px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 16px;
+            gap: 16px;
+            box-shadow: 2px 0 6px rgba(0,0,0,0.05);
+        }
+
+        .upload-zone {
+            border: 2px dashed #94a3b8;
+            border-radius: 8px;
+            padding: 18px;
+            text-align: center;
+            background-color: #f1f5f9;
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent-color);
+            background-color: #eff6ff;
+        }
+
+        .upload-zone i {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-bottom: 6px;
+        }
+
+        #csvFileInput { display: none; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .metric-card {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+        }
+
+        .metric-card .title {
+            font-size: 0.7rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .metric-card .value {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 2px;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1e293b;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .state-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .state-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            border-radius: 6px;
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        .state-label-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-badge {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            display: inline-block;
+            border: 1px solid rgba(0,0,0,0.3);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: #334155;
+            padding: 8px;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 7px 8px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-box {
+            height: 200px;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><i class="fa-solid fa-map-location-dot"></i> Visor HD de Trazo GPS - Cadenas de Estado</h1>
+        <div class="header-actions">
+            <button class="btn-export" onclick="exportMapImage()"><i class="fa-solid fa-camera"></i> Capturar Mapa HD</button>
+            <div id="fileInfo" style="font-size: 0.8rem; opacity: 0.8; margin-left: 10px;">Sin archivo</div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Panel Izquierdo -->
+        <div class="sidebar">
+            <div class="upload-zone" id="dropZone" onclick="document.getElementById('csvFileInput').click();">
+                <i class="fa-solid fa-file-csv"></i>
+                <p><strong>Cargar archivo CSV GPS</strong></p>
+                <small style="color:#64748b;">Arrastra o haz clic aquí</small>
+                <input type="file" id="csvFileInput" accept=".csv">
+            </div>
+
+            <!-- Resumen Viaje -->
+            <div id="summarySection" style="display: none;">
+                <div class="section-title">Resumen del Trayecto</div>
+                <div class="metrics-grid" style="margin-top: 8px;">
+                    <div class="metric-card">
+                        <div class="title">Distancia Total</div>
+                        <div class="value" id="totalDist">0.0 km</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="title">Tiempo Total</div>
+                        <div class="value" id="totalTime">0m 0s</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="title">Vel. Promedio</div>
+                        <div class="value" id="avgSpeed">0.0 km/h</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="title">Total Puntos</div>
+                        <div class="value" id="totalPoints">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leyenda de Colores HD -->
+            <div id="legendSection" style="display: none;">
+                <div class="section-title">
+                    <span>Etiquetas de Estado</span>
+                    <small style="font-weight: normal; color: #64748b; font-size: 0.7rem;">Visibilidad</small>
+                </div>
+                <div class="state-list" id="stateLegend" style="margin-top: 8px;"></div>
+            </div>
+
+            <!-- Gráfico -->
+            <div id="chartSection" style="display: none;">
+                <div class="section-title">Distribución de Tiempo por Estado</div>
+                <div class="chart-box" style="margin-top: 8px;">
+                    <canvas id="timeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Tabla -->
+            <div id="tableSection" style="display: none;">
+                <div class="section-title">Detalle Numérico</div>
+                <div class="table-container" style="margin-top: 8px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Estado</th>
+                                <th>Puntos</th>
+                                <th>Tiempo</th>
+                                <th>Distancia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stateTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mapa -->
+        <div class="map-container" id="mapExportContainer">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script>
+        // Paleta de Colores de Alto Contraste para Documentación
+        const STATE_MAP = {
+            "0": { name: "Origen", color: "#9333EA", border: "#000000" },                    // Morado Intenso
+            "1": { name: "Caminando a la parada/Destino", color: "#10B981", border: "#000000" }, // Verde Neón
+            "2": { name: "Esperando", color: "#F59E0B", border: "#000000" },                 // Ámbar / Naranja
+            "3": { name: "Ascendiendo", color: "#FF5722", border: "#000000" },               // Naranja Fuego
+            "4": { name: "De pie", color: "#06B6D4", border: "#000000" },                    // Cían Eléctrico
+            "5": { name: "Sentado", color: "#2563EB", border: "#000000" },                   // Azul Intenso
+            "6": { name: "Descendiendo", color: "#EF4444", border: "#000000" },               // Rojo Vivo
+            "7": { name: "Destino", color: "#059669", border: "#000000" },                   // Verde Esmeralda
+            "8": { name: "No seleccionado", color: "#475569", border: "#000000" }            // Gris Oscuro
+        };
+
+        let map;
+        let chartInstance = null;
+        let polylineGroup = [];
+        let markerGroup = [];
+        let stateVisibility = {};
+
+        function initMap() {
+            map = L.map('map', {
+                preferCanvas: true // Renderizado optimizado
+            }).setView([19.038, -98.260], 13);
+
+            // Fondo claro (CartoDB Positron) para resaltar los trazos de colores en capturas
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+            }).addTo(map);
+        }
+
+        window.onload = function() {
+            initMap();
+            setupDragAndDrop();
+        };
+
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('csvFileInput');
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) processCSV(e.dataTransfer.files[0]);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) processCSV(e.target.files[0]);
+            });
+        }
+
+        function haversineDistance(coords1, coords2) {
+            const R = 6371000;
+            const dLat = (coords2.lat - coords1.lat) * Math.PI / 180;
+            const dLon = (coords2.lng - coords1.lng) * Math.PI / 180;
+            const lat1 = coords1.lat * Math.PI / 180;
+            const lat2 = coords2.lat * Math.PI / 180;
+
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function processCSV(file) {
+            document.getElementById('fileInfo').innerText = file.name;
+            
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    if (results.data && results.data.length > 0) {
+                        parseAndAnalyzeData(results.data);
+                    }
+                }
+            });
+        }
+
+        function parseAndAnalyzeData(rawData) {
+            const cleanData = rawData.filter(row => {
+                const lat = parseFloat(row.Latitud);
+                const lon = parseFloat(row.Longitud);
+                return !isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0;
+            }).map(row => ({
+                timestamp: new Date(row.Timestamp),
+                lat: parseFloat(row.Latitud),
+                lng: parseFloat(row.Longitud),
+                alt: parseFloat(row.Altitud || 0),
+                precision: parseFloat(row.Precision || 0),
+                speed: parseFloat(row.Velocidad || 0),
+                state: String(row.Estado).trim()
+            }));
+
+            cleanData.sort((a, b) => a.timestamp - b.timestamp);
+
+            if (cleanData.length === 0) {
+                alert("No se encontraron puntos con coordenadas válidas.");
+                return;
+            }
+
+            Object.keys(STATE_MAP).forEach(st => stateVisibility[st] = true);
+
+            const stateStats = {};
+            Object.keys(STATE_MAP).forEach(st => {
+                stateStats[st] = { count: 0, durationSec: 0, distanceM: 0, speeds: [] };
+            });
+
+            let totalDistanceM = 0;
+            let totalDurationSec = 0;
+
+            for (let i = 0; i < cleanData.length; i++) {
+                const pt = cleanData[i];
+                const st = STATE_MAP[pt.state] ? pt.state : "8";
+
+                stateStats[st].count += 1;
+                stateStats[st].speeds.push(pt.speed);
+
+                if (i > 0) {
+                    const prevPt = cleanData[i - 1];
+                    const dist = haversineDistance(prevPt, pt);
+                    const timeDiff = (pt.timestamp - prevPt.timestamp) / 1000;
+
+                    if (timeDiff >= 0 && timeDiff < 3600) {
+                        stateStats[st].durationSec += timeDiff;
+                        stateStats[st].distanceM += dist;
+                        totalDistanceM += dist;
+                        totalDurationSec += timeDiff;
+                    }
+                }
+            }
+
+            updateSummaryCards(cleanData.length, totalDistanceM, totalDurationSec, cleanData);
+            renderLegend(stateStats);
+            renderTable(stateStats, totalDurationSec);
+            renderChart(stateStats);
+            renderMapTrajectory(cleanData);
+
+            document.getElementById('summarySection').style.display = 'block';
+            document.getElementById('legendSection').style.display = 'block';
+            document.getElementById('chartSection').style.display = 'block';
+            document.getElementById('tableSection').style.display = 'block';
+        }
+
+        function updateSummaryCards(totalPts, distM, timeSec, data) {
+            document.getElementById('totalPoints').innerText = totalPts.toLocaleString();
+            document.getElementById('totalDist').innerText = (distM / 1000).toFixed(2) + " km";
+            
+            const mins = Math.floor(timeSec / 60);
+            const secs = Math.round(timeSec % 60);
+            document.getElementById('totalTime').innerText = `${mins}m ${secs}s`;
+
+            const avgSpeedMs = data.reduce((acc, curr) => acc + curr.speed, 0) / data.length;
+            document.getElementById('avgSpeed').innerText = (avgSpeedMs * 3.6).toFixed(1) + " km/h";
+        }
+
+        function renderLegend(stateStats) {
+            const legendContainer = document.getElementById('stateLegend');
+            legendContainer.innerHTML = '';
+
+            Object.keys(STATE_MAP).forEach(st => {
+                const info = STATE_MAP[st];
+                const stats = stateStats[st];
+
+                if (stats.count > 0) {
+                    const div = document.createElement('div');
+                    div.className = 'state-item';
+                    div.innerHTML = `
+                        <div class="state-label-group">
+                            <input type="checkbox" id="chk_${st}" checked onchange="toggleStateVisibility('${st}', this.checked)">
+                            <span class="color-badge" style="background-color: ${info.color}"></span>
+                            <strong>${st}: ${info.name}</strong>
+                        </div>
+                        <span style="color: #64748b; font-weight:600;">${stats.count} pts</span>
+                    `;
+                    legendContainer.appendChild(div);
+                }
+            });
+        }
+
+        function toggleStateVisibility(stateKey, isVisible) {
+            stateVisibility[stateKey] = isVisible;
+            polylineGroup.forEach(item => {
+                if (item.stateKey === stateKey) {
+                    if (isVisible) {
+                        map.addLayer(item.outline);
+                        map.addLayer(item.inline);
+                    } else {
+                        map.removeLayer(item.outline);
+                        map.removeLayer(item.inline);
+                    }
+                }
+            });
+        }
+
+        function renderTable(stateStats, totalTimeSec) {
+            const tbody = document.getElementById('stateTableBody');
+            tbody.innerHTML = '';
+
+            Object.keys(STATE_MAP).forEach(st => {
+                const stats = stateStats[st];
+                if (stats.count > 0) {
+                    const info = STATE_MAP[st];
+                    const timePct = totalTimeSec > 0 ? ((stats.durationSec / totalTimeSec) * 100).toFixed(1) : '0.0';
+                    const mins = Math.floor(stats.durationSec / 60);
+                    const secs = Math.round(stats.durationSec % 60);
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <span class="color-badge" style="background-color: ${info.color}; vertical-align: middle;"></span>
+                            <strong>${st}</strong> - ${info.name}
+                        </td>
+                        <td>${stats.count}</td>
+                        <td>${mins}m ${secs}s (${timePct}%)</td>
+                        <td>${(stats.distanceM / 1000).toFixed(2)} km</td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            });
+        }
+
+        function renderChart(stateStats) {
+            const ctx = document.getElementById('timeChart').getContext('2d');
+            const labels = [];
+            const data = [];
+            const colors = [];
+
+            Object.keys(STATE_MAP).forEach(st => {
+                if (stateStats[st].count > 0) {
+                    labels.push(`${st} - ${STATE_MAP[st].name}`);
+                    data.push(Math.round(stateStats[st].durationSec / 60 * 10) / 10);
+                    colors.push(STATE_MAP[st].color);
+                }
+            });
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Trazado de Alta Definición con Contorno Oscuro (Doble Polyline)
+        function renderMapTrajectory(data) {
+            polylineGroup.forEach(item => {
+                map.removeLayer(item.outline);
+                map.removeLayer(item.inline);
+            });
+            markerGroup.forEach(m => map.removeLayer(m));
+            polylineGroup = [];
+            markerGroup = [];
+
+            if (data.length === 0) return;
+
+            const bounds = [];
+            let currentSegment = [];
+
+            for (let i = 0; i < data.length; i++) {
+                const pt = data[i];
+                const latLng = [pt.lat, pt.lng];
+                bounds.push(latLng);
+
+                const stKey = STATE_MAP[pt.state] ? pt.state : "8";
+
+                if (i === 0) {
+                    currentSegment.push({ latLng, point: pt });
+                    continue;
+                }
+
+                const prevStKey = STATE_MAP[data[i - 1].state] ? data[i - 1].state : "8";
+
+                if (stKey === prevStKey) {
+                    currentSegment.push({ latLng, point: pt });
+                } else {
+                    drawHighQualityPolyline(currentSegment, prevStKey);
+                    currentSegment = [{ latLng: currentSegment[currentSegment.length - 1].latLng, point: data[i - 1] }, { latLng, point: pt }];
+                }
+            }
+
+            if (currentSegment.length > 1) {
+                const lastStKey = STATE_MAP[currentSegment[currentSegment.length - 1].point.state] ? currentSegment[currentSegment.length - 1].point.state : "8";
+                drawHighQualityPolyline(currentSegment, lastStKey);
+            }
+
+            // Marcadores HD de Origen y Fin
+            const startPt = data[0];
+            const startMarker = L.circleMarker([startPt.lat, startPt.lng], {
+                radius: 10,
+                fillColor: "#10B981",
+                color: "#000000",
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 1
+            }).addTo(map);
+            startMarker.bindPopup(`<b>Inicio del Viaje</b><br>${startPt.timestamp.toLocaleTimeString()}`);
+            markerGroup.push(startMarker);
+
+            const endPt = data[data.length - 1];
+            const endMarker = L.circleMarker([endPt.lat, endPt.lng], {
+                radius: 10,
+                fillColor: "#EF4444",
+                color: "#000000",
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 1
+            }).addTo(map);
+            endMarker.bindPopup(`<b>Fin del Viaje</b><br>${endPt.timestamp.toLocaleTimeString()}`);
+            markerGroup.push(endMarker);
+
+            map.fitBounds(bounds, { padding: [40, 40] });
+        }
+
+        // Función encargada de dibujar doble línea (Borde negro + Color principal grueso)
+        function drawHighQualityPolyline(segmentPoints, stateKey) {
+            const stateInfo = STATE_MAP[stateKey] || STATE_MAP["8"];
+            const latLngs = segmentPoints.map(p => p.latLng);
+
+            // 1. Capa de Contorno (Negro para crear el borde contrastante)
+            const outlinePolyline = L.polyline(latLngs, {
+                color: '#0f172a',
+                weight: 10,       // Ancho del borde exterior
+                opacity: 0.9,
+                lineCap: 'round',
+                lineJoin: 'round'
+            });
+
+            // 2. Capa de Color Principal (Color brillante centrado)
+            const inlinePolyline = L.polyline(latLngs, {
+                color: stateInfo.color,
+                weight: 6,        // Ancho del color interior
+                opacity: 1.0,
+                lineCap: 'round',
+                lineJoin: 'round'
+            });
+
+            const midIndex = Math.floor(segmentPoints.length / 2);
+            const samplePt = segmentPoints[midIndex].point;
+
+            inlinePolyline.bindPopup(`
+                <div style="font-size:0.9rem;">
+                    <strong style="color:${stateInfo.color}">Estado ${stateKey}: ${stateInfo.name}</strong><br>
+                    <b>Hora:</b> ${samplePt.timestamp.toLocaleTimeString()}<br>
+                    <b>Velocidad:</b> ${(samplePt.speed * 3.6).toFixed(1)} km/h
+                </div>
+            `);
+
+            if (stateVisibility[stateKey]) {
+                outlinePolyline.addTo(map);
+                inlinePolyline.addTo(map);
+            }
+
+            polylineGroup.push({
+                outline: outlinePolyline,
+                inline: inlinePolyline,
+                stateKey: stateKey
+            });
+        }
+
+        // Exportación directa a captura HD
+        function exportMapImage() {
+            const mapContainer = document.getElementById('mapExportContainer');
+            html2canvas(mapContainer, {
+                useCORS: true,
+                allowTaint: true,
+                scale: 2 // Renderizado 2x para nitidez HD
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'trayectoria_gps_hd.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>
